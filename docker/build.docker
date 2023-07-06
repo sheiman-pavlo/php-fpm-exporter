@@ -1,0 +1,12 @@
+ARG HIPAGES_PHP_FPM_EXPORTER_VERSION=2.2
+FROM hipages/php-fpm_exporter:${HIPAGES_PHP_FPM_EXPORTER_VERSION}
+
+COPY ./scripts.d/entrypoint.d/ /etc/entrypoint.d/
+
+RUN set -eu \
+    && apk --no-cache add tini bash netcat-openbsd
+
+# Setup entrypoint and command
+ENTRYPOINT ["tini", "-sg", "--", "/etc/entrypoint.d/entrypoint.sh"]
+CMD ["/php-fpm_exporter", "server"]
+

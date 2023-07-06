@@ -1,0 +1,54 @@
+on:
+  workflow_call:
+    inputs:
+      image-name:
+        description: "Docker registry repo name. Example: airslate/some-addon or airslate/some-api"
+        type: string
+        required: true
+      php-fpm-exporter-version:
+        description: "PHP-FPM Exporter (https://github.com/hipages/php-fpm_exporter) base version"
+        type: string
+        required: false
+        default: "us-east-1"
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker BuildX
+        uses: docker/setup-buildx-action@v2
+
+      - name: Cache Docker Layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Build Image and Push to Registries
+        uses: docker/build-push-action@v3
+        with:
+          context: docker
+          file: ./docker/build.docker
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            HIPAGES_PHP_FPM_EXPORTER_VERSION=${{ inputs.php-fpm-exporter-version }}
+          push: true
+          tags: ${{ inputs.image-name }}:${{ inputs.php-fpm-exporter-version }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      - name: Move Buildx Cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
