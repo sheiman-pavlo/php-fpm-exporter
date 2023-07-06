@@ -16,3 +16,6 @@ jobs:
     with:
       image-name: qodeboy/php-fpm-exporter
       php-fpm-exporter-version: 2.2
+    secrets:
+      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+      DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
